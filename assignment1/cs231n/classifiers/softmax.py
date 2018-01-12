@@ -30,7 +30,27 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  num_classes = W.shape[1]
+  num_train = X.shape[0]
+  
+  y_hat = np.dot(X, W) # num_train * num_classes
+  for i in range(num_train):
+    y_ = y_hat[i, :]
+
+    shift_y_ = y_ - np.max(y_)
+    loss_i = -shift_y_[y[i]] + np.log(np.sum(np.exp(shift_y_)))
+    loss += loss_i
+    for j in range(num_classes):
+      softmax_socre = np.exp(shift_y_[j]) / np.sum(np.exp(shift_y_))
+      #calc grad
+      if j == y[i]:
+        dW[:, j] += (-1 + softmax_socre) * X[i]
+      else:
+        dW[:, j] += softmax_socre * X[i]
+  loss /= num_train
+  loss += reg * np.sum(W*W)
+  dW /= num_train
+  dW += 2*reg*W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -54,7 +74,21 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  num_train = X.shape[0]
+  y_hat = np.dot(X, W) # num_train * num_classes
+  shift_y_hat = y_hat - np.max(y_hat, axis=1, keepdims=True) # num_train * num_classes
+  
+  softmax_scores = np.exp(shift_y_hat)/np.sum(np.exp(shift_y_hat), axis=1, keepdims=True) # num_train * num_classes
+  dScore = softmax_scores
+  dScore[range(num_train), y][:5] -= 1
+
+  dW = np.dot(X.T, dScore)
+  dW += 2*reg*W
+
+  correct_class_scores = np.choose(y, shift_y_hat.T)
+  loss = np.sum(-correct_class_scores + np.log(np.sum(np.exp(shift_y_hat), axis=1)))/num_train + reg*np.sum(W*W)
+  # loss = np.sum(-shift_y_hat[0, y] + np.log(np.sum(np.exp(shift_y_hat), axis=1, keepdims=True)))/num_train + reg*np.sum(W*W)
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
