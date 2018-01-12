@@ -80,9 +80,10 @@ def softmax_loss_vectorized(W, X, y, reg):
   
   softmax_scores = np.exp(shift_y_hat)/np.sum(np.exp(shift_y_hat), axis=1, keepdims=True) # num_train * num_classes
   dScore = softmax_scores
-  dScore[range(num_train), y][:5] -= 1
+  dScore[range(num_train), y] -= 1
 
   dW = np.dot(X.T, dScore)
+  dW /= num_train
   dW += 2*reg*W
 
   correct_class_scores = np.choose(y, shift_y_hat.T)
