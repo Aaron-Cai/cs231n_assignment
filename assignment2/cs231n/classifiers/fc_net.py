@@ -280,6 +280,8 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         loss, dscore = softmax_loss(score, y)
+        for i reversed(range(1, self.num_layers)):
+            
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
