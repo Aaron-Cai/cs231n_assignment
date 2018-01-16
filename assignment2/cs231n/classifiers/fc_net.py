@@ -47,7 +47,11 @@ class TwoLayerNet(object):
         # weights and biases using the keys 'W1' and 'b1' and second layer weights #
         # and biases using the keys 'W2' and 'b2'.                                 #
         ############################################################################
-        pass
+        self.params = {}
+        self.params['W1'] = weight_scale * np.random.randn(input_dim, hidden_dim)
+        self.params['b1'] = np.zeros(hidden_dim)
+        self.params['W2'] = weight_scale * np.random.randn(hidden_dim, num_classes)
+        self.params['b2'] = np.zeros(num_classes)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -77,7 +81,9 @@ class TwoLayerNet(object):
         # TODO: Implement the forward pass for the two-layer net, computing the    #
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
-        pass
+        a1, cache1 = affine_relu_forward(X, self.params['W1'], self.params['b1'])
+        a2, cache2 = affine_forward(a1, self.params['W2'], self.params['b2'])
+        scores = a2
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -97,7 +103,16 @@ class TwoLayerNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        pass
+        W1 = self.params['W1']
+        W2 = self.params['W2']
+        loss, da2 = softmax_loss(scores, y)
+        loss += 0.5*self.reg*(np.sum(W1*W1)+np.sum(W2*W2))
+        da1, dW2, db2 = affine_backward(da2, cache2)
+        dx, dW1, db1 = affine_relu_backward(da1, cache1)
+        grads['W1'] = dW1 + self.reg * W1
+        grads['b1'] = db1
+        grads['W2'] = dW2 + self.reg * W2
+        grads['b2'] = db2
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -163,7 +178,14 @@ class FullyConnectedNet(object):
         # beta2, etc. Scale parameters should be initialized to one and shift      #
         # parameters should be initialized to zero.                                #
         ############################################################################
-        pass
+        concat_hidden_dims = [input_dim] + hidden_dims + [num_classes]
+        print(concat_hidden_dims)
+        for i in range(1, len(concat_hidden_dims)):
+            self.params['W'+str(i)] = weight_scale * np.random.randn(concat_hidden_dims[i-1], concat_hidden_dims[i])
+            self.params['b'+str(i)] = np.zeros(concat_hidden_dims[i])
+            if self.use_batchnorm:
+                self.params['gamma'+str(i)] = np.ones(concat_hidden_dims[i])
+                self.params['beta'+str(i)] = np.zeros(concat_hidden_dims[i])
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -221,7 +243,20 @@ class FullyConnectedNet(object):
         # self.bn_params[1] to the forward pass for the second batch normalization #
         # layer, etc.                                                              #
         ############################################################################
-        pass
+        A = [0]*(self.num_layers+1)
+        A[0] = X
+        for i in range(1, self.num_layers+1):
+            # affine
+            ai, affine_cachei = affine_forward(A[i-1], self.params['W'+str(i)], self.params['b'+str(i)])
+            if i < self.num_layers:
+                if self.use_batchnorm:
+                    ai, bat_cachei = batchnorm_backward(ai, self.params['gamma'+str(i)], self.params['beta'+str(i)], bn_param)
+                ai, relu_cachei = relu_forward(ai)
+                if self.use_dropout:
+                    ai, drop_cachei = dropout_forward(ai, self.dropout_param)
+                A[i] = ai
+            else:
+                score = ai
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -244,7 +279,7 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        pass
+        loss, dscore = softmax_loss(score, y)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
