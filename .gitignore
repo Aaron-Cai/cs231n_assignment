@@ -2,3 +2,5 @@ env
 *.pyd
 
 assignment2/\.ipynb_checkpoints/
+
+\.idea/
